@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+function finish {
+  if [[ -f "$backup_file" ]]; then
+    mv "$backup_file" "$backend_file"
+  fi
+}
+trap finish EXIT
+
+function parse_replace {
+  local tfvar_file=$1
+  if [[ ! -e "$i" ]]; then return; fi
+  
+  cat $tfvar_file | while read key value; do
+    # Strip leading `=`
+    value=${value#"="}
+    # Trim whitespace ` `
+    value="$(echo -e "${value}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    # Strip quotes `"`
+    value="$(echo -e "${value}" | sed -e 's/^"//' -e 's/"$//')"
+    
+    # All values
+    sed -i '' -e "s/\${var\.${key}}/${value}/g" "$backend_file"
+    # TODO Only replace vars inside `terraform` configuration
+    #sed -i '' -e "s/terraform\s*{(.*)\${var\.${key}}(.*)(resource|data|provider|variable|output|local|module)/terraform {$1${value}$2$3/g" "$backend_file"
+  done
+}
+
+if [ -z ${1+x} ]; then echo "Error: Missing action argument."; return; fi
+if [ -z ${2+x} ]; then echo "Warning: Missing environment argument."; fi
+action=$1
+environment=$2
+args="${@:3}"
+
+backend_file="main.tf"
+backup_file=$(mktemp "main.tf.bak")
+
+cat "$backend_file" > "$backup_file"
+
+tfvar_files=("env.${environment}.tfvars" "terraform.auto.tfvars" "terraform.tfvars")
+
+for i in "${tfvar_files[@]}"; do
+  parse_replace "$i"
+done
+
+# Debug
+#head -15 $backend_file
+
+if [[ -e "env.${environment}.tfvars" ]]; then
+  terraform ${action} -var-file env.${environment}.tfvars ${args}
+else
+  terraform ${action} ${args}
+fi
