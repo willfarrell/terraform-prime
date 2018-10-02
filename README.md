@@ -15,9 +15,9 @@ Copy `terraform-prime` to `/usr/local/bin/` and ensure its executable (`chmod u+
 Update `bashrc` to include `alias tf=terraform-prime`
 
 ## Running the test
-Uncomment debug line and run `tf plan master`. Check `terraform` configuration has all variables replaced.
+Run `tf test production`. Check `terraform` configuration has all variables replaced.
 
-## Deploying
+## Running
 To allow deploying between ... ** TODO
 ```bash
 environments
@@ -35,7 +35,7 @@ environment=production
 
 terraform.tfvars
 ```hcl-terraform
-name=appcodename
+name=appname
 profile=codename
 ```
 

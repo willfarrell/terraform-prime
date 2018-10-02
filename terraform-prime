@@ -44,8 +44,10 @@ for i in "${tfvar_files[@]}"; do
   parse_replace "$i"
 done
 
-# Debug
-#head -15 $backend_file
+# Test replacement
+if [ "${action}" == "test" ]; then
+  head -15 $backend_file
+fi
 
 if [[ -e "env.${environment}.tfvars" ]]; then
   terraform ${action} -var-file env.${environment}.tfvars ${args}
