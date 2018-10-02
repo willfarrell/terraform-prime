@@ -1,6 +1,9 @@
 # terraform-prime
 Super lightweight wrapper over terraform to allow `${var.*****}` inside backends. This allows for flatter folder structure in your terraform projects.
 
+- [hashcorp/terraform#13022](https://github.com/hashicorp/terraform/issues/13022)
+- [hashcorp/terraform#17288](https://github.com/hashicorp/terraform/issues/17288)
+
 ## Getting Started
 
 ### Prerequisites

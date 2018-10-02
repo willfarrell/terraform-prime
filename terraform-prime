@@ -37,7 +37,8 @@ backup_file=$(mktemp "main.tf.bak")
 
 cat "$backend_file" > "$backup_file"
 
-tfvar_files=("env.${environment}.tfvars" "terraform.auto.tfvars" "terraform.tfvars")
+# TODO allow *.auto.tfvats
+tfvar_files=("env.${environment}.tfvars" "terraform.tfvars" "terraform.auto.tfvars")
 
 for i in "${tfvar_files[@]}"; do
   parse_replace "$i"
