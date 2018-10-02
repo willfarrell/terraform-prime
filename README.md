@@ -25,6 +25,31 @@ environments
 |  |- main.tf
 ```
 
+env.production.tfvars
+```hcl-terraform
+environment=production
+```
+
+terraform.tfvars
+```hcl-terraform
+name=appcodename
+profile=codename
+```
+
+main.tf
+```hcl-terraform
+terraform {
+  backend "s3" {
+    bucket         = "terraform-state-${var.name}"
+    key            = "${var.environment}/account/terraform.tfstate"
+    region         = "us-east-1"
+    profile        = "${var.profile}"
+    dynamodb_table = "terraform-state-${var.name}"
+  }
+}
+
+...
+```
 ### Running
 ```bash
 # tf {action} {environment} [args]
