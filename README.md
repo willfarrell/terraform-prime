@@ -55,8 +55,13 @@ terraform {
 ```
 ### Running
 ```bash
+$ tf init staging
 # tf {action} {environment} [args]
-$ tf plan production
+$ tf plan staging
+# clear current env cache
+$ tf clear
+# clear and init env
+$ tf switch production
 ```
 
 ## Built With
@@ -75,3 +80,4 @@ This project is licensed under the MIT License - see the [LICENSE]() file for de
 
 ## TODO
 - [ ] Streamline installation (brew?)
+- [ ] recursively check for tfvars in parent dirs

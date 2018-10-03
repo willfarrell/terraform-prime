@@ -26,11 +26,26 @@ function parse_replace {
   done
 }
 
+function clear {
+  rm -rf ".terraform"
+}
+
 if [ -z ${1+x} ]; then echo "Error: Missing action argument."; return; fi
 if [ -z ${2+x} ]; then echo "Warning: Missing environment argument."; fi
 action=$1
 environment=$2
 args="${@:3}"
+
+# Test replacement
+if [ "${action}" == "clear" ]; then
+  clear
+  exit 1
+fi
+
+if [ "${action}" == "switch" ]; then
+  clear
+  action=init
+fi
 
 backend_file="main.tf"
 backup_file=$(mktemp "main.tf.bak")
