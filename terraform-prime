@@ -11,7 +11,7 @@ function parse_replace {
   local tfvar_file=$1
   if [[ ! -e "$i" ]]; then return; fi
   
-  cat $tfvar_file | while read key value; do
+  cat ${tfvar_file} | while read key value; do
     # Strip leading `=`
     value=${value#"="}
     # Trim whitespace ` `
@@ -46,7 +46,8 @@ done
 
 # Test replacement
 if [ "${action}" == "test" ]; then
-  head -15 $backend_file
+  head -15 ${backend_file}
+  exit 1
 fi
 
 if [[ -e "env.${environment}.tfvars" ]]; then
