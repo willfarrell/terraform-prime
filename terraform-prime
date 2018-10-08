@@ -11,19 +11,62 @@ function parse_replace {
   local tfvar_file=$1
   if [[ ! -e "$i" ]]; then return; fi
   
-  cat ${tfvar_file} | while read key value; do
-    # Strip leading `=`
-    value=${value#"="}
+  cat ${tfvar_file} | while IFS='=' read key value; do
     # Trim whitespace ` `
+    key="$(echo -e "${key}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
     value="$(echo -e "${value}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
     # Strip quotes `"`
     value="$(echo -e "${value}" | sed -e 's/^"//' -e 's/"$//')"
     
     # All values
+    #echo "Replace: ${key} => ${value}"
     sed -i '' -e "s/\${var\.${key}}/${value}/g" "$backend_file"
     # TODO Only replace vars inside `terraform` configuration
     #sed -i '' -e "s/terraform\s*{(.*)\${var\.${key}}(.*)(resource|data|provider|variable|output|local|module)/terraform {$1${value}$2$3/g" "$backend_file"
   done
+}
+
+# TODO
+# - load configs from .tfconfig - check up dir tree and ~/
+# - encrypt env files
+
+function encryption_password {
+    local path="$(pwd)"
+    local password=""
+    while [[ $path != / ]]; do
+        if [ -e "${path}/.tfconfig" ]; then
+            password=$(grep -Po "(?<=^encryption_key ).*" "${path}/.tfconfig")
+
+            if [ -e "$password" ]; then password=$(cat $password); fi
+
+            path="/"
+        fi
+        path="$(greadlink -f "$path"/..)"
+    done
+    return ${password}
+}
+
+function find_replace {
+    local path="$1"
+    local tfvar_patterns=("env.${environment}.tfvars" "terraform.tfvars" "*.auto.tfvars")
+
+    while [[ $path != / ]]; do
+        for p in "${tfvar_patterns[@]}"; do
+            local tfvar_files=$(find "$path" -maxdepth 1 -mindepth 1 -iname "${p}")
+
+            for i in "${tfvar_files[@]}"; do
+              if [ "${i}" == "" ]; then continue; fi
+              parse_replace "$i"
+            done
+        done
+
+        if [ -e "${path}/.tfconfig" ]; then
+            path="/"
+        fi
+
+        # TODO Add in toggle to allow Mac and Linux
+        path="$(greadlink -f "$path"/..)"
+    done
 }
 
 function clear {
@@ -31,20 +74,24 @@ function clear {
 }
 
 if [ -z ${1+x} ]; then echo "Error: Missing action argument."; return; fi
-if [ -z ${2+x} ]; then echo "Warning: Missing environment argument."; fi
+if [ -z ${2+x} ]; then echo "Warning: Missing environment argument.";  fi
 action=$1
-environment=$2
+environment=${2:-unknown}
 args="${@:3}"
 
 # Test replacement
 if [ "${action}" == "clear" ]; then
   clear
   exit 1
-fi
-
-if [ "${action}" == "switch" ]; then
+elif [ "${action}" == "switch" ]; then
   clear
   action=init
+elif [ "${action}" == "encrypt" ]; then
+  encryption_password | openssl aes-256-cbc -a -pass pass:secret -in $1 -out "env.${environment}.tfvars.enc"
+  exit 1
+elif [ "${action}" == "decrypt" ]; then
+  encryption_password | openssl aes-256-cbc -d -a -pass pass:secret -in "env.${environment}.tfvars.enc" -out "env.${environment}.tfvars"
+  exit 1
 fi
 
 backend_file="main.tf"
@@ -52,12 +99,7 @@ backup_file=$(mktemp "main.tf.bak")
 
 cat "$backend_file" > "$backup_file"
 
-# TODO allow *.auto.tfvats
-tfvar_files=("env.${environment}.tfvars" "terraform.tfvars" "terraform.auto.tfvars")
-
-for i in "${tfvar_files[@]}"; do
-  parse_replace "$i"
-done
+find_replace $(pwd)
 
 # Test replacement
 if [ "${action}" == "test" ]; then

@@ -7,12 +7,15 @@ Super lightweight wrapper over terraform to allow `${var.*****}` inside backends
 ## Getting Started
 
 ### Prerequisites
-- `terraform` must be installed. `$ brew install terraform`
+- `terraform` must be installed. `$ brew install terraform coreutils`
 
 ### Installing
 Copy `terraform-prime` to `/usr/local/bin/` and ensure its executable (`chmod u+x /usr/local/bin/terraform-prime`).
 
-Update `bashrc` to include `alias tf=terraform-prime`
+Update `bashrc` to include 
+```bash
+alias tf=terraform-prime
+```
 
 ## Running the test
 Run `tf test production`. Check `terraform` configuration has all variables replaced.
